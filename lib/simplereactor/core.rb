@@ -11,6 +11,8 @@ module SimpleReactor
     attr_reader :ios
   
     def self.run &block
+      SimpleReactor.use_engine :nio unless SimpleReactor.engine_initialized?
+      
       reactor = Reactor.new
   
       reactor.run( &block )

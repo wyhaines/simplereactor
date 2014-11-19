@@ -1,4 +1,5 @@
-  # Simple; not particularly efficient for many entries.
+# Simple; not particularly efficient for many entries.
+# TODO: Make this an implementation that isn't horrible when there are a lot of timers.
 module SimpleReactor
   
   class TimerMap < Hash

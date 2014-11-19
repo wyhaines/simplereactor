@@ -1,5 +1,5 @@
 module SimpleReactor
-  module Select
+  class Select < Core
     class Monitor
       attr_accessor :io, :value
       

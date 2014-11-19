@@ -1,4 +1,10 @@
 require 'simplereactor'
+
+if ARGV[0]
+  SimpleReactor.use_engine( ARGV[0].to_sym )
+end
+
+
 require 'socket'
 
 server = TCPServer.new("0.0.0.0", 9949)
