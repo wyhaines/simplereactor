@@ -1,4 +1,5 @@
 require 'simplereactor'
+require 'tinytypes'
 require 'getoptlong'
 require 'socket'
 
@@ -108,11 +109,10 @@ EHELP
 
   def initialize
     @children = nil
+    @docroot = self.class.docroot
   end
   
   def run(&block)
-    Dir.chdir self.class.docroot if self.class.docroot
-    
     @server = TCPServer.new self.class.host, self.class.port
     
     handle_threading
@@ -121,24 +121,39 @@ EHELP
       @reactor = reactor
       @reactor.attach @server, :read do |monitor|
         connection = monitor.io.accept
-        handle_request '',connection
+        handle_request '',connection, monitor
       end
     end 
   end
   
-  def handle_request buffer, connection, first=true
-    buffer << connection.read_nonblock(4096)
-    request = parse_request buffer
-    handle_response_for request, connection if request
+  def handle_request buffer, connection, monitor = nil
+    eof = false
+    buffer << connection.read_nonblock(16384)
   rescue EOFError
-    request = parse_request buffer
-    handle_response_for request, connection
+    eof = true
   rescue IO::WaitReadable
-    if first
-      @reactor.attach connection, :read do |monitor|
-        handle_request buffer, connection, false
+    # This is actually handled in the logic below. We just need to survive it.
+  ensure
+    request = parse_request buffer, connection
+    if !request && monitor
+      @reactor.next_tick do
+        @reactor.attach connection, :read do |monitor|
+          handle_request buffer, connection
+        end
+      end
+    elsif eof && !request
+      deliver_400 connection
+    elsif request
+      handle_response_for request, connection
+    end
+    
+    if request || eof
+      @reactor.next_tick do
+        @reactor.detach(connection)
+        connection.close
       end
     end
+    
   end
   
   def handle_response_for request, connection
@@ -150,7 +165,7 @@ EHELP
     end
   end
   
-  def parse_request buffer
+  def parse_request buffer, connection
     if buffer =~ /^(\w+) +(?:\w+:\/\/([^ \/]+))?([^ \?\#]*)\S* +HTTP\/(\d\.\d)/
       request_method = $1
       uri = $3
@@ -173,31 +188,31 @@ EHELP
       end
       
       { :uri => uri, :request_method => request_method, :http_version => http_version, :name => name }
-    else
-      deliver_400
     end
   end
   
   def deliver uri, connection
     data = File.read(uri)
-    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri,data}\r\nConnection:close\r\n\r\n#{data}"
-    connection.close
+    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nConnection:close\r\n\r\n#{data}"
   end
   
   def deliver_404 uri, connection
     buffer = "The requested resource (#{uri}) could not be found."
     connection.write "HTTP/1.1 404 Not Found\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
-    connection.close
   end
 
-  def deliver_400 uri, connection
+  def deliver_400 connection
     buffer = "The request was malformed and could not be completed."
     connection.write "HTTP/1.1 400 Bad Request\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
-    connection.close
   end
  
-  def content_type_for(path, data)
-    "text/plain"
+  def content_type_for path
+    MIME::TinyTypes.types.simple_type_for( path ) || 'application/octet-stream'
+  end
+  
+  def data_for path_info
+    path = File.join(@docroot,path_info)
+    path if FileTest.exist?(path) and FileTest.file?(path) and File.expand_path(path).index(docroot) == 0		
   end
   
   def handle_threading

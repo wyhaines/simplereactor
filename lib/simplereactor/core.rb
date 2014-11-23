@@ -40,6 +40,11 @@ module SimpleReactor
   
     def detach io
       @ios.delete io
+      deregister_monitor io
+    end
+  
+    def deregister_monitor io
+      # Override in subclass, as necessary
     end
   
     def add_timer time, *args, &block

@@ -26,6 +26,10 @@ module SimpleReactor
       end
     end
     
+    def deregister_monitor io
+      @selector.deregister io
+    end
+    
     def handle_events
       @selector.select(0) do |monitor|
         monitor.value.first.call(monitor, *monitor.value.last)
