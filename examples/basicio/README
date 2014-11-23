@@ -1,0 +1,8 @@
+This provides a very simple example of an echo type server. When started,
+it simultaneously listens for input from STDIN, and for input from a
+TCP port. When an HTTP request is received on the TCP port, an HTTP response
+is sent containing whatever has been entered from STDIN as the response.
+
+Note that this is NOT even close to an actual functional web server
+implementation. It makes no effort to parse anything, and simply responds
+to a connection with an HTTP response.
