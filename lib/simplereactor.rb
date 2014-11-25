@@ -1,3 +1,4 @@
+require 'simplereactor/version'
 require 'simplereactor/core'
 
 # Prefer nio4r, but fall back to using select if necessary.

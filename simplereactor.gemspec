@@ -3,16 +3,14 @@ $:.push File.expand_path("../lib", __FILE__)
 require "simplereactor"
 
 Gem::Specification.new do |s|
-  s.name        = "simplereactor"
+  s.name        = SimpleReactor::NAME
   s.version     = SimpleReactor::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Kirk Haines"]
-  s.email       = ["khaines@engineyard.com"]
-  s.homepage    = ""
-  s.summary     = %q{Simplereactor is a very simple, pure Ruby event based IO reactor, with no external requirements. Use it when all you need is some simple, no frills event based IO.}
-  s.description = s.summary
-
-  s.rubyforge_project = "simplereactor"
+  s.authors     = SimpleReactor::AUTHORS
+  s.email       = SimpleReactor::EMAIL
+  s.homepage    = SimpleReactor::HOMEPAGE
+  s.summary     = SimpleReactor::SUMMARY
+  s.description = s.summary # Lame; put something more thorough here.
 
   s.files         = `git ls-files |`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
