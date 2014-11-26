@@ -5,8 +5,6 @@ module SimpleReactor
   
   class Core
     
-    VERSION = "2.0.0_pre1"
-    
     Events = [:read, :write, :error].freeze
     attr_reader :ios
   

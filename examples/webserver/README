@@ -1,0 +1,12 @@
+This is a very facile web server implementation. It only serves static files,
+in the simplest way possible (though it does make an effort to determine the
+correct MIME type for the content being returned). It does not support any of
+the HTTP specification other than the simplest GET retrieval of a static
+resource and does no real parsing of HTTP. It also does not support any sort
+of chunked encoding or sophisticated handling of large files, so it will do
+terrible things to your RAM utilization if you attempt to deliver very large
+files.
+
+That said, for what it is, it's a very simple, functional static file server
+that illustrates doing something useful with the SimpleReactor implementation,
+with performance that is respectably quick.
