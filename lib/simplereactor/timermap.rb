@@ -32,7 +32,7 @@ module SimpleReactor
     def add_timer time, *args, &block
       time = case time
       when Time
-        Time.to_i
+        time.to_i
       else
         Time.now + time.to_i
       end
