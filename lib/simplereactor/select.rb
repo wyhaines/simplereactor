@@ -1,7 +1,7 @@
 require 'simplereactor/select_monitor'
 
 module SimpleReactor
-  
+
   class Select < Core
 
     def register_monitors io, events, *args, &block
@@ -33,18 +33,18 @@ module SimpleReactor
     def pending_events
       # Trim our IO set to only include those which are not closed.
       @ios.reject! {|io, v| io.closed? }
-  
+
       h = find_handles_with_events @ios.keys
-  
+
       if h
         handles = Events.zip(h).inject({}) {|hndl, ev| hndl[ev.first] = ev.last; hndl}
-  
+
         events = Hash.new {|hash,k| hash[k] = []}
-  
+
         Events.each do |event|
           handles[event].each { |io| events[io] << event }
         end
-  
+
         events
       else
         {} # No handles
@@ -54,11 +54,11 @@ module SimpleReactor
     def find_handles_with_events keys
       select find_ios(:read), find_ios(:write), keys, 0.1
     end
-  
+
     def find_ios event
       @ios.select { |io, h| h[:events].include? event}.collect { |io, data| io }
     end
-    
+
     def initialize_ios_data_structure
       @ios = Hash.new do |h,k|
         h[k] = {
@@ -68,9 +68,9 @@ module SimpleReactor
         }
       end
     end
-    
+
   end
-  
+
   Reactor = Select
-  
+
 end

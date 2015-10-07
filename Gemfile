@@ -1,8 +1,4 @@
-source "http://rubygems.org"
+source 'https://rubygems.org'
 
+# Specify your gem's dependencies in simplereactor.gemspec
 gemspec
-
-group :test do
-  gem "rake"
-  gem "shoulda-context"
-end

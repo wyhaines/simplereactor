@@ -1,27 +1,55 @@
-# Simple Reactor
+# Simplereactor
 
-This is a simple, pure Ruby implementation of an event reactor for handling IO in an event oriented manner. It was originally written by Kirk Haines for an article on the Engine Yard blog about event based IO.  The original article can be found at
+This is a simple, pure Ruby implementation of an event reactor for handling IO
+in an event oriented manner. It was originally written by Kirk Haines for an
+article on the Engine Yard blog about event based IO.  The original article can
+be found at
 
 https://blog.engineyard.com/2011/what-are-events-why-might-you-care-and-how-can-eventmachine-help
 
+## Installation
+
+Add this line to your application's Gemfile:
+
+```ruby
+gem 'simplereactor'
+```
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install simplereactor
+
+## Usage
+
+TODO: Write usage instructions here
+
+## Development
+
+After checking out the repo, run `bin/setup` to install dependencies. Then, run
+`rake test` to run the tests. You can also run `bin/console` for an interactive
+prompt that will allow you to experiment.
+
+To install this gem onto your local machine, run `bundle exec rake install`. To
+release a new version, update the version number in `version.rb`, and then run
+`bundle exec rake release`, which will create a git tag for the version, push
+git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/wyhaines/simplereactor.
+This project is intended to be a safe, welcoming space for collaboration, and
+contributors are expected to adhere to the [Contributor Covenant](contributor-covenant.org)
+code of conduct.
+
+
 ## License
 
-This code is being released under the MIT open source license.
+The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Contact
 
 Kirk Haines <wyhaines@gmail.com>
-
-## Bugs
-
-There are no known bugs with this implementation at this time.  Report bugs in the github repository, please.
-
-## Installation
-
-    $ gem install simplereactor
-
-## Common Use
-
-See the examples in examples/
-
-

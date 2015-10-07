@@ -1,7 +1,7 @@
 # Simple; not particularly efficient for many entries.
 # TODO: Make this an implementation that isn't horrible when there are a lot of timers.
 module SimpleReactor
-  
+
   class TimerMap < Hash
     def []=(k,v)
       super
@@ -36,7 +36,7 @@ module SimpleReactor
       else
         Time.now + time.to_i
       end
-      
+
       self[time] = [block, args] if block
     end
 
@@ -46,5 +46,5 @@ module SimpleReactor
       block.call(*args)
     end
   end
-  
+
 end
