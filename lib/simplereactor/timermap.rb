@@ -3,8 +3,13 @@
 module SimpleReactor
 
   class TimerMap < Hash
+
     def []=(k,v)
-      super
+      if self.has_key? k
+        self[k] << v
+      else
+        super(k,[v])
+      end
       @sorted_keys = keys.sort
       v
     end
@@ -23,8 +28,14 @@ module SimpleReactor
       if @sorted_keys.empty?
         nil
       else
-        first_key = @sorted_keys.shift
-        val = self.delete first_key
+        first_key = @sorted_keys.first
+        val = self[first_key].shift
+
+        if self[first_key].empty?
+          @sorted_keys.shift
+          self.delete first_key
+        end
+
         [first_key, val]
       end
     end
@@ -32,9 +43,9 @@ module SimpleReactor
     def add_timer time, *args, &block
       time = case time
       when Time
-        time.to_i
+        time
       else
-        Time.now + time.to_i
+        Time.now + time.to_f
       end
 
       self[time] = [block, args] if block
@@ -44,6 +55,20 @@ module SimpleReactor
       _, v = self.shift
       block, args = v
       block.call(*args)
+    end
+
+    def ready?
+      next_time && next_time <= Time.now
+    end
+
+    def call
+      results = []
+
+      while ready? do
+        results << call_next_timer
+      end
+
+      results.empty? ? nil : results
     end
   end
 
