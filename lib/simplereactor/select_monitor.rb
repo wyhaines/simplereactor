@@ -3,7 +3,7 @@ module SimpleReactor
     class Monitor
       attr_accessor :io, :value
 
-      def initialize( io_obj, event, val)
+      def initialize( io_obj, event, val = nil)
         @io = io_obj
         @value = val
 
@@ -12,6 +12,8 @@ module SimpleReactor
           set_readable
         when :write
           set_writeable
+        else
+          raise "Illegal event type; monitor must be either :read or :write"
         end
       end
 

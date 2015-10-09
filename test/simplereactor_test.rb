@@ -1,11 +1,19 @@
 require 'test_helper'
+require 'simplereactor'
 
-class SimpleReactorTest < Minitest::Test
-  def test_that_it_has_a_version_number
-    refute_nil ::SimpleReactor::VERSION
+describe SimpleReactor do
+
+  it "sets reactor to a select() based reactor when instructed to do so" do
+    SimpleReactor.use_engine :select
+
+    SimpleReactor.Reactor.must_be_same_as SimpleReactor::Select
   end
 
-  def test_it_does_something_useful
-    assert true
+  it "sets reactor to a nio4r based reactor, if nio4r is available" do
+    SimpleReactor.use_engine :nio
+
+    SimpleReactor.Reactor.must_be_same_as SimpleReactor::Nio if Object.const_defined? :NIO
   end
+
+
 end

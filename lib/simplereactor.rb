@@ -5,17 +5,32 @@ require 'simplereactor/core'
 
 module SimpleReactor
 
+  def self.Reactor
+    @reactor
+  end
+
+  def self.Reactor=(val)
+    @reactor = val
+  end
+
   def self.use_engine( engine )
     case engine
     when :nio
       require 'simplereactor/nio'
+      puts "GOT NIO"
+      SimpleReactor::Nio.is_reactor_engine
     when :select
       require 'simplereactor/select'
+      SimpleReactor::Select.is_reactor_engine
     end
   rescue LoadError
     require 'simplereactor/select'
+    SimpleReactor::Select.is_reactor_engine
   ensure
-    require 'simplereactor/select' unless SimpleReactor.const_defined?( :Reactor ) && SimpleReactor::Reactor
+    unless SimpleReactor.Reactor
+      require 'simplereactor/select'
+      SimpleReactor::Select.is_reactor_engine
+    end
     initialize_engine
   end
 

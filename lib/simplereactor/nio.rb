@@ -4,6 +4,10 @@ module SimpleReactor
 
   class Nio < Core
 
+    def self.is_reactor_engine
+      SimpleReactor.Reactor = SimpleReactor::Nio
+    end
+
     def initialize
       super
       @selector = NIO::Selector.new

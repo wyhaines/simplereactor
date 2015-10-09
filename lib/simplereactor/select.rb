@@ -4,6 +4,10 @@ module SimpleReactor
 
   class Select < Core
 
+    def self.is_reactor_engine
+      SimpleReactor.Reactor = SimpleReactor::Select
+    end
+
     def register_monitors io, events, *args, &block
       i = @ios[io]
       events.each {|event|  i[:callbacks][event] = block }
@@ -71,6 +75,6 @@ module SimpleReactor
 
   end
 
-  Reactor = Select
+  SimpleReactor::Select.is_reactor_engine
 
 end
