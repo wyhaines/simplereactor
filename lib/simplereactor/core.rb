@@ -24,6 +24,10 @@ module SimpleReactor
       initialize_ios_data_structure
     end
 
+    def initialize_ios_data_structure
+      true
+    end
+
     def attach io, *args, &block
       events = Events & args
       args -= events
