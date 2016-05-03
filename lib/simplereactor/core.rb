@@ -11,7 +11,7 @@ module SimpleReactor
     def self.run &block
       SimpleReactor.use_engine :nio unless SimpleReactor.engine_initialized?
 
-      reactor = Reactor.new
+      reactor = SimpleReactor.Reactor.new
 
       reactor.run( &block )
     end

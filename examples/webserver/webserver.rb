@@ -2,6 +2,7 @@ require 'simplereactor'
 require 'tinytypes'
 require 'getoptlong'
 require 'socket'
+require 'time'
 
 class SimpleWebServer
 
@@ -117,7 +118,7 @@ EHELP
 
     handle_threading
 
-    SimpleReactor::Reactor.run do |reactor|
+    SimpleReactor.Reactor.run do |reactor|
       @reactor = reactor
       @reactor.attach @server, :read do |monitor|
         connection = monitor.io.accept
@@ -157,8 +158,11 @@ EHELP
   end
 
   def handle_response_for request, connection
-    path = "./#{request[:uri]}"
-    if FileTest.exist?( path ) && FileTest.readable?( path )
+    #path = "./#{request[:uri]}"
+    #if FileTest.exist?( path ) && FileTest.readable?( path )
+    path = File.join( @docroot, request[:uri] )
+    if FileTest.exist?( path ) and FileTest.file?( path ) and File.expand_path( path ).index( @docroot ) == 0
+
       deliver path, connection
     else
       deliver_404 path, connection
@@ -196,8 +200,9 @@ EHELP
       deliver_directory connection
     else
       data = File.read(uri)
+      last_modified = File.mtime(uri).httpdate
     end
-    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nConnection:close\r\n\r\n#{data}"
+    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nLast-Modified: #{last_modified}\r\nConnection:close\r\n\r\n#{data}"
   rescue Exception
     deliver_500 connection
   end
