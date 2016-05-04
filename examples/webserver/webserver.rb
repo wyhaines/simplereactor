@@ -20,6 +20,7 @@ class SimpleWebServer
       [ '--processes', '-n', GetoptLong::REQUIRED_ARGUMENT],
       [ '--engine',    '-e', GetoptLong::REQUIRED_ARGUMENT],
       [ '--port',      '-p', GetoptLong::REQUIRED_ARGUMENT],
+      [ '--bind',      '-b', GetoptLong::REQUIRED_ARGUMENT],
       [ '--docroot',   '-d', GetoptLong::REQUIRED_ARGUMENT]
     )
 
