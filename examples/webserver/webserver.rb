@@ -225,7 +225,6 @@ EHELP
   def _deliver uri, connection
     data = File.read(uri)
     last_modified = File.mtime(uri).httpdate
-    sleep 1
     connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nLast-Modified: #{last_modified}\r\nConnection:close\r\n\r\n#{data}"
     queue_detach connection
   end
