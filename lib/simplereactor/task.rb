@@ -13,7 +13,7 @@ module SimpleReactor
         supervisor = args.first
       end
 
-      @status = :pending
+      pending
       @supervisor = supervisor
       @task = block
     end
@@ -22,12 +22,19 @@ module SimpleReactor
       _invoke( *args )
     end
 
+    def pending
+      @status = :pending
+    end
+
     def running
       @status = :running
     end
 
     def done
       @status = :done
+    end
+
+    def cleanup(task_list)
     end
 
     def runnable?

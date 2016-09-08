@@ -1,3 +1,13 @@
+require 'simplereactor/task'
+
+#####
+#
+# SimpleReactor::Task::Singular
+#
+# A task that happens only a single time.
+#
+#####
+
 module SimpleReactor
   class Task
     class Singular < SimpleReactor::Task
@@ -23,4 +33,3 @@ module SimpleReactor
     end
   end
 end
-
