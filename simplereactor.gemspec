@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Kirk Haines"]
   spec.email         = ["wyhaines@gmail.com"]
 
-  spec.summary       = %q{Simple Reactor}
-  spec.description   = %q{Simple Reactor}
+  spec.summary       = %q{Pure Ruby event reactor.}
+  spec.description   = %q{Pretty minimalistic implememntation of an event reactor, in pure Ruby, but it's still fast enough to be useful.}
   spec.homepage      = "http://github.com/wyhaines/simplereactor"
   spec.license       = "MIT"
 

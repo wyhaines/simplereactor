@@ -17,7 +17,6 @@ module SimpleReactor
     case engine
     when :nio
       require 'simplereactor/nio'
-      puts "GOT NIO"
       SimpleReactor::Nio.is_reactor_engine
     when :select
       require 'simplereactor/select'

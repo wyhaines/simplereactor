@@ -2,8 +2,11 @@ require 'simplereactor'
 require 'tinytypes'
 require 'getoptlong'
 require 'socket'
+require 'time'
 
 class SimpleWebServer
+
+  attr_reader :threaded
 
   EXE = File.basename __FILE__
   VERSION = "1.0"
@@ -12,11 +15,13 @@ class SimpleWebServer
     initialize_defaults
 
     opts = GetoptLong.new(
-      [ '--help',    '-h', GetoptLong::NO_ARGUMENT],
-      [ '--threads', '-t', GetoptLong::REQUIRED_ARGUMENT],
-      [ '--engine',  '-e', GetoptLong::REQUIRED_ARGUMENT],
-      [ '--port',    '-p', GetoptLong::REQUIRED_ARGUMENT],
-      [ '--docroot', '-d', GetoptLong::REQUIRED_ARGUMENT]
+      [ '--help',      '-h', GetoptLong::NO_ARGUMENT],
+      [ '--threaded',  '-t', GetoptLong::NO_ARGUMENT],
+      [ '--processes', '-n', GetoptLong::REQUIRED_ARGUMENT],
+      [ '--engine',    '-e', GetoptLong::REQUIRED_ARGUMENT],
+      [ '--port',      '-p', GetoptLong::REQUIRED_ARGUMENT],
+      [ '--bind',      '-b', GetoptLong::REQUIRED_ARGUMENT],
+      [ '--docroot',   '-d', GetoptLong::REQUIRED_ARGUMENT]
     )
 
     opts.each do |opt, arg|
@@ -48,9 +53,11 @@ defaults to serving files from the current director when it was invoked.
 -b HOSTNAME, --bind HOSTNAME:
   The hostname/IP to bind to. This defaults to 127.0.0.1 if it is not provided.
 
--t COUNT, --threads COUNT:
-  The number of threads to create of this web server. This defaults to a single
-  thread.
+-n COUNT, --processes COUNT:
+  The number of processess to create of this web server. This defaults to a single process.
+
+-t, --threaded:
+  Wrap content deliver in a thread to hedge against slow content delivery.
 EHELP
         exit
       when '--docroot'
@@ -61,8 +68,10 @@ EHELP
         @port = arg.to_i != 0 ? arg.to_i : @port
       when '--bind'
         @host = arg
-      when '--threads'
-        @threads = arg.to_i != 0 ? arg.to_i : @port
+      when '--processes'
+        @processes = arg.to_i != 0 ? arg.to_i : @port
+      when '--threaded'
+        @threaded = true
       end
     end
   end
@@ -72,7 +81,8 @@ EHELP
     @engine = 'nio'
     @port = 80
     @host = '127.0.0.1'
-    @threads = 1
+    @processes = 1
+    @threaded = false
   end
 
   def self.docroot
@@ -91,8 +101,12 @@ EHELP
     @host
   end
 
-  def self.threads
-    @threads
+  def self.processes
+    @processes
+  end
+
+  def self.threaded
+    @threaded
   end
 
   def self.run
@@ -102,22 +116,21 @@ EHELP
 
     webserver = SimpleWebServer.new
 
-    webserver.run do |request|
-      webserver.handle_response request
-    end
+    webserver.run
   end
 
   def initialize
     @children = nil
     @docroot = self.class.docroot
+    @threaded = self.class.threaded
   end
 
-  def run(&block)
+  def run
     @server = TCPServer.new self.class.host, self.class.port
 
-    handle_threading
+    handle_processes
 
-    SimpleReactor::Reactor.run do |reactor|
+    SimpleReactor.Reactor.run do |reactor|
       @reactor = reactor
       @reactor.attach @server, :read do |monitor|
         connection = monitor.io.accept
@@ -137,7 +150,7 @@ EHELP
     request = parse_request buffer, connection
     if !request && monitor
       @reactor.next_tick do
-        @reactor.attach connection, :read do |monitor|
+        @reactor.attach connection, :read do |mon|
           handle_request buffer, connection
         end
       end
@@ -147,18 +160,22 @@ EHELP
       handle_response_for request, connection
     end
 
-    if request || eof
+    if eof
+      queue_detach connection
+    end
+  end
+
+  def queue_detach connection
       @reactor.next_tick do
         @reactor.detach(connection)
         connection.close
       end
-    end
-
   end
 
   def handle_response_for request, connection
-    path = "./#{request[:uri]}"
-    if FileTest.exist?( path ) && FileTest.readable?( path )
+    path = File.join( @docroot, request[:uri] )
+    if FileTest.exist?( path ) and FileTest.file?( path ) and File.expand_path( path ).index( @docroot ) == 0
+
       deliver path, connection
     else
       deliver_404 path, connection
@@ -195,11 +212,22 @@ EHELP
     if FileTest.directory? uri
       deliver_directory connection
     else
-      data = File.read(uri)
+      if threaded
+        Thread.new { _deliver uri, connection }
+      else
+        _deliver uri, connection
+      end
     end
-    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nConnection:close\r\n\r\n#{data}"
-  rescue Exception
-    deliver_500 connection
+  rescue Errno::EPIPE
+  rescue Exception => e
+    deliver_500 connection, e
+  end
+
+  def _deliver uri, connection
+    data = File.read(uri)
+    last_modified = File.mtime(uri).httpdate
+    connection.write "HTTP/1.1 200 OK\r\nContent-Length:#{data.length}\r\nContent-Type: #{content_type_for uri}\r\nLast-Modified: #{last_modified}\r\nConnection:close\r\n\r\n#{data}"
+    queue_detach connection
   end
 
   def deliver_directory
@@ -209,21 +237,34 @@ EHELP
   def deliver_404 uri, connection
     buffer = "The requested resource (#{uri}) could not be found."
     connection.write "HTTP/1.1 404 Not Found\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
+  rescue Errno::EPIPE
+  ensure
+    queue_detach connection
   end
 
   def deliver_400 connection
     buffer = "The request was malformed and could not be completed."
     connection.write "HTTP/1.1 400 Bad Request\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
+  rescue Errno::EPIPE
+  ensure
+    queue_detach connection
   end
 
   def deliver_403 connection
     buffer = "Forbidden. The requested resource can not be accessed."
     connection.write "HTTP/1.1 403 Bad Request\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
+  rescue Errno::EPIPE
+  ensure
+    queue_detach connection
   end
 
-  def deliver_500 connection
-    buffer = "There was an internal server error."
+  def deliver_500 connection, error
+    buffer = "There was an internal server error -- #{error}"
+puts buffer
     connection.write "HTTP/1.1 500 Bad Request\r\nContent-Length:#{buffer.length}\r\nContent-Type:text/plain\r\nConnection:close\r\n\r\n#{buffer}"
+  rescue Errno::EPIPE
+  ensure
+    queue_detach connection
   end
 
   def content_type_for path
@@ -235,10 +276,10 @@ EHELP
     path if FileTest.exist?(path) and FileTest.file?(path) and File.expand_path(path).index(docroot) == 0		
   end
 
-  def handle_threading
-    if self.class.threads > 1
+  def handle_processes
+    if self.class.processes > 1
       @children = []
-      (self.class.threads - 1).times do |thread_count|
+      (self.class.processes - 1).times do |thread_count|
         pid = fork()
         if pid
           @children << pid
@@ -247,7 +288,7 @@ EHELP
         end
       end
 
-      Thread.new { waitall }
+      Thread.new { Process.waitall } if @children
     end
   end
 
